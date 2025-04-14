@@ -1,15 +1,6 @@
 use std::fs::File;
 use std::io::Read;
 
-pub struct Cpu {
-    memory: [u8; 4096 as usize],
-    v_registers: [u8; 16],
-    index_register: u16,
-    program_counter: u16,
-    stack: Vec<u16>,
-    stack_pointer: u16,
-    pub temp_should_halt: bool,
-}
 #[derive(Debug)]
 pub struct Instruction {
     pub instruction: u8,
@@ -20,10 +11,20 @@ pub struct Instruction {
     pub nnn: u16,
 }
 
+pub struct Cpu {
+    memory: [u8; 4096_usize],
+    v_registers: [u8; 16],
+    index_register: u16,
+    program_counter: u16,
+    stack: Vec<u16>,
+    stack_pointer: u16,
+    pub temp_should_halt: bool,
+}
+
 impl Cpu {
     pub fn new() -> Self {
         Cpu {
-            memory: [0; 4096 as usize],
+            memory: [0; 4096_usize],
             v_registers: [0; 16],
             index_register: 0,
             program_counter: 0x200,
@@ -56,9 +57,8 @@ impl Cpu {
     }
 
     pub fn fetch(&mut self) -> Instruction {
-        let opcode: u16 = (((self.memory[self.program_counter as usize] as u16) << 8)
-            | self.memory[(self.program_counter + 1) as usize] as u16)
-            .into();
+        let opcode: u16 = ((self.memory[self.program_counter as usize] as u16) << 8)
+            | self.memory[(self.program_counter + 1) as usize] as u16;
         let decoded_instruction = Instruction {
             instruction: (self.memory[self.program_counter as usize] >> 4),
             x: (self.memory[self.program_counter as usize] & 0x0F),
