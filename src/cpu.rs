@@ -19,6 +19,7 @@ pub struct Cpu {
     stack: Vec<u16>,
     stack_pointer: u16,
     pub temp_should_halt: bool,
+    pub pixel_buffer: [[bool; 64]; 32],
 }
 
 impl Cpu {
@@ -31,6 +32,7 @@ impl Cpu {
             stack: Vec::new(),
             stack_pointer: 0,
             temp_should_halt: false,
+            pixel_buffer: [[false; 64]; 32],
         }
     }
 
@@ -76,6 +78,7 @@ impl Cpu {
             0x0 => {
                 if instruction.y == 0xE {
                     println!("CLS");
+                    self.pixel_buffer = [[false; 64]; 32];
                 }
             }
             0x1 => {
@@ -101,6 +104,10 @@ impl Cpu {
             }
             0xD => {
                 println!("DRAW");
+                // self.pixel_buffer[0][0] = true;
+                // self.pixel_buffer[31][63] = true;
+                // self.pixel_buffer[31][0] = true;
+                // self.pixel_buffer[0][63] = true;
             }
             _ => println!("Instruction Unimplemented"),
         }
