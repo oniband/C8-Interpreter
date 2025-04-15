@@ -51,6 +51,7 @@ impl Cpu {
             }
             Err(err) => eprintln!("{err:?}"),
         }
+        println!("{:?}", data);
         for byte in data {
             self.memory[self.program_counter as usize] = byte;
             self.increment_program_counter(1);
@@ -96,7 +97,8 @@ impl Cpu {
             }
             0x7 => {
                 println!("ADD V{}, {}", instruction.x, instruction.nn);
-                let _ = self.v_registers[instruction.x as usize].wrapping_add(instruction.nn);
+                self.v_registers[instruction.x as usize] =
+                    self.v_registers[instruction.x as usize].wrapping_add(instruction.nn);
             }
             0xA => {
                 println!("MOV I, {}", instruction.nnn);
@@ -104,10 +106,32 @@ impl Cpu {
             }
             0xD => {
                 println!("DRAW");
-                // self.pixel_buffer[0][0] = true;
-                // self.pixel_buffer[31][63] = true;
-                // self.pixel_buffer[31][0] = true;
-                // self.pixel_buffer[0][63] = true;
+                let index = self.index_register;
+                let mut x = self.v_registers[instruction.x as usize] & 0x3F;
+                let mut y = self.v_registers[instruction.y as usize] & 0x1F;
+                self.v_registers[0xF] = 0;
+
+                for n in 0..instruction.n {
+                    let sprite_data: u8 = self.memory[(index + n as u16) as usize];
+                    println!("----- NEW BYTE -----");
+                    for i in (0..8).rev() {
+                        if sprite_data & (1 << i) != 0
+                            && self.pixel_buffer[(y) as usize][(x) as usize]
+                        {
+                            self.v_registers[0xF] = 1;
+                        }
+                        self.pixel_buffer[y as usize][x as usize] ^= (sprite_data & (1 << i)) != 0;
+                        println!("X:{x} Y: {y}");
+                        x += 1;
+                        if x > 63 {
+                            x = 0;
+                        }
+                    }
+                    y += 1;
+                    if y > 31 {
+                        y = 0;
+                    }
+                }
             }
             _ => println!("Instruction Unimplemented"),
         }
