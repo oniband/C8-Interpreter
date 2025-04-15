@@ -1,3 +1,4 @@
+use bitvec::prelude::*;
 use std::fs::File;
 use std::io::Read;
 
@@ -51,7 +52,6 @@ impl Cpu {
             }
             Err(err) => eprintln!("{err:?}"),
         }
-        println!("{:?}", data);
         for byte in data {
             self.memory[self.program_counter as usize] = byte;
             self.increment_program_counter(1);
@@ -106,30 +106,33 @@ impl Cpu {
             }
             0xD => {
                 println!("DRAW");
+
                 let index = self.index_register;
-                let mut x = self.v_registers[instruction.x as usize] & 0x3F;
-                let mut y = self.v_registers[instruction.y as usize] & 0x1F;
+                let mut x: usize = (self.v_registers[instruction.x as usize] & 0x3F).into();
+                let mut y: usize = (self.v_registers[instruction.y as usize] & 0x1F).into();
                 self.v_registers[0xF] = 0;
 
                 for n in 0..instruction.n {
-                    let sprite_data: u8 = self.memory[(index + n as u16) as usize];
-                    println!("----- NEW BYTE -----");
-                    for i in (0..8).rev() {
-                        if sprite_data & (1 << i) != 0
-                            && self.pixel_buffer[(y) as usize][(x) as usize]
-                        {
-                            self.v_registers[0xF] = 1;
+                    let mut sprite_data: u8 = self.memory[(index + n as u16) as usize];
+                    let sprite_bits = sprite_data.view_bits_mut::<Msb0>();
+                    println!("{:?}", sprite_bits);
+                    for bit in sprite_bits.iter() {
+                        if *bit && self.pixel_buffer[y][x] {
+                            self.v_registers[0xF] = 1
                         }
-                        self.pixel_buffer[y as usize][x as usize] ^= (sprite_data & (1 << i)) != 0;
-                        println!("X:{x} Y: {y}");
+                        println!(
+                            "Setting Pixel at X:{x} Y:{y} to {:?}",
+                            self.pixel_buffer[y][x] ^ *bit
+                        );
+                        self.pixel_buffer[y][x] ^= *bit;
                         x += 1;
                         if x > 63 {
-                            x = 0;
+                            x = 0
                         }
                     }
                     y += 1;
                     if y > 31 {
-                        y = 0;
+                        y = 0
                     }
                 }
             }
