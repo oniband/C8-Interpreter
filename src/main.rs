@@ -1,24 +1,33 @@
 use raylib::prelude::*;
 use std::fs::File;
 
+mod util;
+use crate::util::validate_args;
+
 mod cpu;
 use crate::cpu::{Cpu, Instruction};
-// use crate::graphics::{generate_pixel_buffer};
 
-const PATH_TO_FILE: &str = "./test_bin/2-ibm-logo.ch8";
 const WINDOW_WIDTH: i32 = 640;
 const WINDOW_HEIGHT: i32 = 320;
 
 fn main() -> std::io::Result<()> {
     let mut cpu = Cpu::new();
-    let mut program = File::open(PATH_TO_FILE)?;
-    cpu.load_program_into_memory(&mut program);
+    match validate_args() {
+        Ok(value) => {
+            let mut program = File::open(value)?;
+            cpu.load_program_into_memory(&mut program);
+        }
+        Err(err) => {
+            panic!("{err}");
+        }
+    }
 
     let (mut rl, thread) = raylib::init()
         .size(WINDOW_WIDTH, WINDOW_HEIGHT)
         .title("C8-Emu")
         .build();
     rl.set_target_fps(cpu.clock_speed);
+
     while !rl.window_should_close() {
         if !cpu.should_halt {
             let instruction: Instruction = cpu.fetch();

@@ -16,7 +16,7 @@ pub struct Cpu {
     v_registers: [u8; 16],
     index_register: u16,
     program_counter: u16,
-    stack: Vec<u16>,
+    _stack: Vec<u16>,
     pub should_halt: bool,
     pub pixel_buffer: [[bool; 64]; 32],
     //The clock speed is what will determine raylibs FPS. Seems to be the easiest way to implement
@@ -31,7 +31,7 @@ impl Cpu {
             v_registers: [0; 16],
             index_register: 0,
             program_counter: 0x200,
-            stack: Vec::new(),
+            _stack: Vec::new(),
             should_halt: false,
             pixel_buffer: [[false; 64]; 32],
             clock_speed: 30,
@@ -40,8 +40,8 @@ impl Cpu {
 
     pub fn load_program_into_memory(&mut self, program: &mut File) {
         let mut data: Vec<u8> = Vec::new();
-        // Traditionally, the interpreter was put into the first 512 bytes of memory, meaning that
-        // ROMs had to fit into the remaining memory, we check that here
+        //Traditionally, the interpreter was put into the first 512 bytes of memory, meaning that
+        //ROMs had to fit into the remaining memory, we check that here
         match program.read_to_end(&mut data) {
             Ok(value) => {
                 if value > 3584 {
@@ -59,11 +59,11 @@ impl Cpu {
             self.memory[self.program_counter as usize] = byte;
             self.increment_program_counter(1);
         }
-        self.set_program_counter(0x200); // set it back to 512 which is the first instruction.
+        self.set_program_counter(0x200); //Set it back to 512 which is the first instruction.
     }
 
-    // Looks scary but we're just doing bitwise operations on each byte to extract 4 nibbles and a 12
-    // bit memory address from the final 3 nibbles.
+    //Looks scary but we're just doing bitwise operations on each byte to extract 4 nibbles and a 12
+    //bit memory address from the final 3 nibbles.
     pub fn fetch(&mut self) -> Instruction {
         let opcode: u16 = ((self.memory[self.program_counter as usize] as u16) << 8)
             | self.memory[(self.program_counter + 1) as usize] as u16;
@@ -91,9 +91,9 @@ impl Cpu {
                 println!("JMP {}", instruction.nnn);
                 self.set_program_counter(instruction.nnn);
 
-                // Roms have a tendency to have a "JUMP TO SELF" at the end of their instructions
-                // They do this because there's no "stop execution" instruction.
-                // Here we make sure we're not just looping forever at the end.
+                //Roms have a tendency to have a "JUMP TO CURRENT INSTRUCTION" at the end of their instructions
+                //They do this because there's no "stop execution" instruction
+                //Here we make sure we're not just looping forever at the end
                 if self.program_counter == instruction.nnn {
                     println!("Infinte loop detected, halting execution!");
                     self.should_halt = true;
@@ -131,7 +131,8 @@ impl Cpu {
                         if sprite_data & (1 << bit) != 0 && self.pixel_buffer[y][x] {
                             self.v_registers[0xF] = 1
                         }
-                        // Pixels are XOR'd onto the screen here,
+                        //Pixels are XOR'd onto the screen here,
+                        //If it's anything other than 0, it means the current bit has been set
                         self.pixel_buffer[y][x] ^= sprite_data & (1 << bit) != 0;
 
                         x += 1;
@@ -172,10 +173,10 @@ impl Cpu {
         }
     }
 
-    // A simple debug function that will dump out the contents of the pixel buffer into a
-    // *hopefully* more readable format. I find it useful to compare this to the actual pixel data
-    // from the ROM since it looks exactly like the sprite it represents except with 1's and 0's
-    // What a cool format.
+    //A simple debug function that will dump out the contents of the pixel buffer into a
+    //*hopefully* more readable format. I find it useful to compare this to the actual pixel data
+    //from the ROM since it looks exactly like the sprite it represents except with 1's and 0's
+    //What a cool format.
     fn _dump_pixel_buffer(&self) {
         for y in 0..32 {
             print!("{{");
