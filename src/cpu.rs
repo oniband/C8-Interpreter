@@ -18,9 +18,11 @@ pub struct Cpu {
     index_register: u16,
     program_counter: u16,
     stack: Vec<u16>,
-    stack_pointer: u16,
-    pub temp_should_halt: bool,
+    pub should_halt: bool,
     pub pixel_buffer: [[bool; 64]; 32],
+    //The clock speed is what will determine raylibs FPS. Seems to be the easiest way to implement
+    //a cycle speed since we're calling cpu functions from within the raylib game loop.
+    pub clock_speed: u32,
 }
 
 impl Cpu {
@@ -31,14 +33,16 @@ impl Cpu {
             index_register: 0,
             program_counter: 0x200,
             stack: Vec::new(),
-            stack_pointer: 0,
-            temp_should_halt: false,
+            should_halt: false,
             pixel_buffer: [[false; 64]; 32],
+            clock_speed: 30,
         }
     }
 
     pub fn load_program_into_memory(&mut self, program: &mut File) {
         let mut data: Vec<u8> = Vec::new();
+        // Traditionally, the interpreter was put into the first 512 bytes of memory, meaning that
+        // ROMs had to fit into the remaining memory, we check that here
         match program.read_to_end(&mut data) {
             Ok(value) => {
                 if value > 3584 {
@@ -56,9 +60,11 @@ impl Cpu {
             self.memory[self.program_counter as usize] = byte;
             self.increment_program_counter(1);
         }
-        self.set_program_counter(0x200);
+        self.set_program_counter(0x200); // set it back to 512 which is the first instruction.
     }
 
+    // Looks scary but we're just doing bitwise operations on each byte to extract 4 nibbles and a 12
+    // bit memory address from the final 3 nibbles.
     pub fn fetch(&mut self) -> Instruction {
         let opcode: u16 = ((self.memory[self.program_counter as usize] as u16) << 8)
             | self.memory[(self.program_counter + 1) as usize] as u16;
@@ -86,9 +92,13 @@ impl Cpu {
                 println!("JMP {}", instruction.nnn);
                 self.set_program_counter(instruction.nnn);
 
+                // Roms have a tendency to have a "JUMP TO SELF" at the end of their instructions
+                // They do this because there's no "stop execution" instruction.
+                // Here we make sure we're not just looping forever at the end.
                 if self.program_counter == instruction.nnn {
                     println!("Infinte loop detected, halting execution!");
-                    self.temp_should_halt = true;
+                    self.should_halt = true;
+                    self.clock_speed = 0;
                 }
             }
             0x6 => {
@@ -110,18 +120,21 @@ impl Cpu {
                     instruction.x, instruction.y, instruction.n
                 );
                 let index = self.index_register;
+                //The Y coordinate doesn't need to be reset, we can initialize it outside the loop
                 let mut y: usize = (self.v_registers[instruction.y as usize] % 32).into();
                 self.v_registers[0xF] = 0;
 
-                for n in 0..instruction.n {
-                    let mut sprite_data: u8 = self.memory[(index + n as u16) as usize];
-                    let sprite_bits = sprite_data.view_bits_mut::<Msb0>();
+                for row in 0..instruction.n {
+                    let mut sprite_data: u8 = self.memory[(index + row as u16) as usize];
+                    //The X coordinate should be reset for each row that we do
                     let mut x: usize = (self.v_registers[instruction.x as usize] % 64).into();
-                    for bit in sprite_bits.iter() {
+                    for bit in sprite_data.view_bits_mut::<Msb0>().iter() {
                         if *bit && self.pixel_buffer[y][x] {
                             self.v_registers[0xF] = 1
                         }
+                        // Pixels are XOR'd onto the screen here,
                         self.pixel_buffer[y][x] ^= *bit;
+
                         x += 1;
                         if x > 63 {
                             x = 0
@@ -160,7 +173,11 @@ impl Cpu {
         }
     }
 
-    fn dump_pixel_buffer(&self) {
+    // A simple debug function that will dump out the contents of the pixel buffer into a
+    // *hopefully* more readable format. I find it useful to compare this to the actual pixel data
+    // from the ROM since it looks exactly like the sprite it represents except with 1's and 0's
+    // What a cool format.
+    fn _dump_pixel_buffer(&self) {
         for y in 0..32 {
             print!("{{");
             for x in 0..64 {
@@ -170,7 +187,7 @@ impl Cpu {
                     print!("0 ");
                 }
             }
-            print!("}}\n");
+            println!("}}");
         }
     }
 }
