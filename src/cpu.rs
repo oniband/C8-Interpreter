@@ -1,4 +1,3 @@
-use bitvec::prelude::*;
 use std::fs::File;
 use std::io::Read;
 
@@ -125,15 +124,15 @@ impl Cpu {
                 self.v_registers[0xF] = 0;
 
                 for row in 0..instruction.n {
-                    let mut sprite_data: u8 = self.memory[(index + row as u16) as usize];
+                    let sprite_data: u8 = self.memory[(index + row as u16) as usize];
                     //The X coordinate should be reset for each row that we do
                     let mut x: usize = (self.v_registers[instruction.x as usize] % 64).into();
-                    for bit in sprite_data.view_bits_mut::<Msb0>().iter() {
-                        if *bit && self.pixel_buffer[y][x] {
+                    for bit in (0..8).rev() {
+                        if sprite_data & (1 << bit) != 0 && self.pixel_buffer[y][x] {
                             self.v_registers[0xF] = 1
                         }
                         // Pixels are XOR'd onto the screen here,
-                        self.pixel_buffer[y][x] ^= *bit;
+                        self.pixel_buffer[y][x] ^= sprite_data & (1 << bit) != 0;
 
                         x += 1;
                         if x > 63 {
