@@ -5,7 +5,7 @@ mod cpu;
 use crate::cpu::{Cpu, Instruction};
 // use crate::graphics::{generate_pixel_buffer};
 
-const PATH_TO_FILE: &str = "./test_bin/2-ibm-logo.ch8";
+const PATH_TO_FILE: &str = "./test_bin/1-chip8-logo.ch8";
 const WINDOW_WIDTH: i32 = 640;
 const WINDOW_HEIGHT: i32 = 320;
 

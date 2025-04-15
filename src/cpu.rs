@@ -67,7 +67,7 @@ impl Cpu {
             x: (self.memory[self.program_counter as usize] & 0x0F),
             y: (self.memory[(self.program_counter + 1) as usize] >> 4),
             n: (self.memory[(self.program_counter + 1) as usize] & 0x0F),
-            nn: self.memory[self.program_counter as usize],
+            nn: self.memory[(self.program_counter + 1) as usize],
             nnn: opcode & 0x0FFF,
         };
         self.increment_program_counter(2);
@@ -105,25 +105,22 @@ impl Cpu {
                 self.index_register = instruction.nnn;
             }
             0xD => {
-                println!("DRAW");
-
+                println!(
+                    "DRAW FROM X:{} Y:{} for {} rows",
+                    instruction.x, instruction.y, instruction.n
+                );
                 let index = self.index_register;
-                let mut x: usize = (self.v_registers[instruction.x as usize] & 0x3F).into();
-                let mut y: usize = (self.v_registers[instruction.y as usize] & 0x1F).into();
+                let mut y: usize = (self.v_registers[instruction.y as usize] % 32).into();
                 self.v_registers[0xF] = 0;
 
                 for n in 0..instruction.n {
                     let mut sprite_data: u8 = self.memory[(index + n as u16) as usize];
                     let sprite_bits = sprite_data.view_bits_mut::<Msb0>();
-                    println!("{:?}", sprite_bits);
+                    let mut x: usize = (self.v_registers[instruction.x as usize] % 64).into();
                     for bit in sprite_bits.iter() {
                         if *bit && self.pixel_buffer[y][x] {
                             self.v_registers[0xF] = 1
                         }
-                        println!(
-                            "Setting Pixel at X:{x} Y:{y} to {:?}",
-                            self.pixel_buffer[y][x] ^ *bit
-                        );
                         self.pixel_buffer[y][x] ^= *bit;
                         x += 1;
                         if x > 63 {
@@ -160,6 +157,20 @@ impl Cpu {
             );
         } else {
             self.program_counter = value;
+        }
+    }
+
+    fn dump_pixel_buffer(&self) {
+        for y in 0..32 {
+            print!("{{");
+            for x in 0..64 {
+                if self.pixel_buffer[y][x] {
+                    print!("1 ");
+                } else {
+                    print!("0 ");
+                }
+            }
+            print!("}}\n");
         }
     }
 }
