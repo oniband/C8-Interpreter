@@ -35,11 +35,11 @@ fn main() -> std::io::Result<()> {
         }
 
         let mut d = rl.begin_drawing(&thread);
-        d.clear_background(Color::BLACK);
+        d.clear_background(Color::ORANGE);
         for y in 0..32 {
             for x in 0..64 {
                 if cpu.pixel_buffer[y][x] {
-                    d.draw_rectangle(x as i32 * 10, y as i32 * 10, 10, 10, Color::WHITE);
+                    d.draw_rectangle(x as i32 * 10, y as i32 * 10, 10, 10, Color::YELLOW);
                 }
             }
         }

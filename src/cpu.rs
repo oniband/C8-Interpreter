@@ -332,24 +332,10 @@ impl Cpu {
                     self.memory[self.index_register as usize] = value / 100;
                     self.memory[self.index_register as usize + 1] = (value / 10) % 10;
                     self.memory[self.index_register as usize + 2] = value % 10;
-                    println!(
-                        "DEBUG: MEMORY ADDRESS {} SET TO {}",
-                        self.index_register, self.memory[self.index_register as usize]
-                    );
-                    println!(
-                        "DEBUG: MEMORY ADDRESS {} SET TO {}",
-                        self.index_register + 1,
-                        self.memory[self.index_register as usize + 1]
-                    );
-                    println!(
-                        "DEBUG: MEMORY ADDRESS {} SET TO {}",
-                        self.index_register + 2,
-                        self.memory[self.index_register as usize + 2]
-                    );
                 }
                 0x55 => {
                     println!("MEM SET FROM {} FOR {}", self.index_register, instruction.x);
-                    for register in 0..instruction.x + 1 {
+                    for register in 0..=instruction.x {
                         self.memory[(self.index_register as usize) + register as usize] =
                             self.v_registers[0 + register as usize];
                     }
@@ -359,7 +345,7 @@ impl Cpu {
                         "MEM GRAB FROM {} FOR {}",
                         self.index_register, instruction.x
                     );
-                    for register in 0..instruction.x + 1 {
+                    for register in 0..=instruction.x {
                         self.v_registers[0 + register as usize] =
                             self.memory[(self.index_register as usize) + register as usize];
                     }
