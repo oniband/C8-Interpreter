@@ -35,7 +35,7 @@ impl Cpu {
             stack: Vec::new(),
             should_halt: false,
             pixel_buffer: [[false; 64]; 32],
-            clock_speed: 30,
+            clock_speed: 60,
         }
     }
 
