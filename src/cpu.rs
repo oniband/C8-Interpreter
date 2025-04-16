@@ -328,20 +328,40 @@ impl Cpu {
                     println!("CONV V{}", instruction.x);
                     //This is probably the coolest instruction, you convert the binary value
                     //into a decimal and then add all the digits together
-                    let old_value = self.v_registers[instruction.x as usize];
-                    for (idx, digit) in old_value.to_string().char_indices() {
-                        println!("DEBUG: {digit}");
-                        //Normally I woudln't use unwrap() here but since it's always going to be a
-                        //single digit, I think it's fine.
-                        self.memory[(self.index_register as usize) + idx] =
-                            digit.to_string().parse::<u8>().unwrap();
-                    }
+                    let value = self.v_registers[instruction.x as usize];
+                    self.memory[self.index_register as usize] = value / 100;
+                    self.memory[self.index_register as usize + 1] = (value / 10) % 10;
+                    self.memory[self.index_register as usize + 2] = value % 10;
+                    println!(
+                        "DEBUG: MEMORY ADDRESS {} SET TO {}",
+                        self.index_register, self.memory[self.index_register as usize]
+                    );
+                    println!(
+                        "DEBUG: MEMORY ADDRESS {} SET TO {}",
+                        self.index_register + 1,
+                        self.memory[self.index_register as usize + 1]
+                    );
+                    println!(
+                        "DEBUG: MEMORY ADDRESS {} SET TO {}",
+                        self.index_register + 2,
+                        self.memory[self.index_register as usize + 2]
+                    );
                 }
                 0x55 => {
                     println!("MEM SET FROM {} FOR {}", self.index_register, instruction.x);
-                    for register in 0..instruction.x {
+                    for register in 0..instruction.x + 1 {
                         self.memory[(self.index_register as usize) + register as usize] =
-                            self.v_registers[register as usize];
+                            self.v_registers[0 + register as usize];
+                    }
+                }
+                0x65 => {
+                    println!(
+                        "MEM GRAB FROM {} FOR {}",
+                        self.index_register, instruction.x
+                    );
+                    for register in 0..instruction.x + 1 {
+                        self.v_registers[0 + register as usize] =
+                            self.memory[(self.index_register as usize) + register as usize];
                     }
                 }
                 _ => {}
