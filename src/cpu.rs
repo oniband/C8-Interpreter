@@ -16,7 +16,7 @@ pub struct Cpu {
     v_registers: [u8; 16],
     index_register: u16,
     program_counter: u16,
-    _stack: Vec<u16>,
+    stack: Vec<u16>,
     pub should_halt: bool,
     pub pixel_buffer: [[bool; 64]; 32],
     //The clock speed is what will determine raylibs FPS. Seems to be the easiest way to implement
@@ -31,7 +31,7 @@ impl Cpu {
             v_registers: [0; 16],
             index_register: 0,
             program_counter: 0x200,
-            _stack: Vec::new(),
+            stack: Vec::new(),
             should_halt: false,
             pixel_buffer: [[false; 64]; 32],
             clock_speed: 30,
@@ -82,14 +82,22 @@ impl Cpu {
     pub fn decode_and_execute(&mut self, instruction: Instruction) {
         match instruction.instruction {
             0x0 => {
-                if instruction.y == 0xE {
+                // We need to differenciate between 0x00E0(clear screen) and 0x00EE(return from subroutine)
+                if instruction.y == 0xE && instruction.n != 0xE {
                     println!("CLS");
                     self.pixel_buffer = [[false; 64]; 32];
+                }
+                if instruction.n == 0xE && instruction.n == 0x0E {
+                    if let Some(return_address) = self.stack.pop() {
+                        println!("RET {return_address}");
+                        self.set_program_counter(return_address);
+                    } else {
+                        panic!("Tried to return from a subroutine with an empty Stack!");
+                    }
                 }
             }
             0x1 => {
                 println!("JMP {}", instruction.nnn);
-                self.set_program_counter(instruction.nnn);
 
                 //Roms have a tendency to have a "JUMP TO CURRENT INSTRUCTION" at the end of their instructions
                 //They do this because there's no "stop execution" instruction
@@ -98,6 +106,34 @@ impl Cpu {
                     println!("Infinte loop detected, halting execution!");
                     self.should_halt = true;
                     self.clock_speed = 0;
+                }
+
+                self.set_program_counter(instruction.nnn);
+            }
+            0x2 => {
+                println!("CALL {}", instruction.nnn);
+                self.stack.push(self.program_counter);
+                self.set_program_counter(instruction.nnn);
+            }
+            0x3 => {
+                println!(
+                    "JMP IF EQUAL V{} {}, {}",
+                    instruction.x, self.v_registers[instruction.x as usize], instruction.nnn
+                );
+                if self.v_registers[instruction.x as usize] == instruction.nn {
+                    self.increment_program_counter(2);
+                }
+            }
+            0x4 => {
+                if self.v_registers[instruction.x as usize] != instruction.nn {
+                    self.increment_program_counter(2);
+                }
+            }
+            0x5 => {
+                if self.v_registers[instruction.x as usize]
+                    == self.v_registers[instruction.y as usize]
+                {
+                    self.increment_program_counter(2);
                 }
             }
             0x6 => {
@@ -109,9 +145,145 @@ impl Cpu {
                 self.v_registers[instruction.x as usize] =
                     self.v_registers[instruction.x as usize].wrapping_add(instruction.nn);
             }
+            0x8 => match instruction.n {
+                0x0 => {
+                    println!("MOV V{}, V{}", instruction.x, instruction.y);
+                    self.v_registers[instruction.x as usize] =
+                        self.v_registers[instruction.y as usize];
+                }
+                0x1 => {
+                    println!("OR V{}, V{}", instruction.x, instruction.y);
+                    self.v_registers[instruction.x as usize] = self.v_registers
+                        [instruction.x as usize]
+                        | self.v_registers[instruction.y as usize];
+                }
+                0x2 => {
+                    println!("AND V{}, V{}", instruction.x, instruction.y);
+                    self.v_registers[instruction.x as usize] = self.v_registers
+                        [instruction.x as usize]
+                        & self.v_registers[instruction.y as usize];
+                }
+                0x3 => {
+                    println!("XOR V{}, V{}", instruction.x, instruction.y);
+                    self.v_registers[instruction.x as usize] = self.v_registers
+                        [instruction.x as usize]
+                        ^ self.v_registers[instruction.y as usize];
+                }
+                0x4 => {
+                    println!("ADD V{}, V{}", instruction.x, instruction.y);
+
+                    //This instruction requires that if there was an overflow, we set the VF register to one
+                    //Otherwise it gets set to zero
+                    let (_, overflowed) = self.v_registers[instruction.x as usize]
+                        .overflowing_add(self.v_registers[instruction.y as usize]);
+                    if overflowed {
+                        self.v_registers[0xF] = 1;
+                    } else {
+                        self.v_registers[0xF] = 0;
+                    }
+
+                    self.v_registers[instruction.x as usize] = self.v_registers
+                        [instruction.x as usize]
+                        .wrapping_add(self.v_registers[instruction.y as usize])
+                }
+                0x5 => {
+                    println!(
+                        "SUB V{}, V{} MINUS V{}",
+                        instruction.x, instruction.x, instruction.y
+                    );
+
+                    // If we're going to underflow, vf should be set to 1
+                    if self.v_registers[instruction.x as usize]
+                        > self.v_registers[instruction.y as usize]
+                    {
+                        self.v_registers[0xF] = 1;
+                    } else if self.v_registers[instruction.x as usize]
+                        < self.v_registers[instruction.y as usize]
+                    {
+                        self.v_registers[0xF] = 0;
+                    }
+
+                    self.v_registers[instruction.x as usize] = self.v_registers
+                        [instruction.x as usize]
+                        .wrapping_sub(self.v_registers[instruction.y as usize]);
+                }
+                0x6 => {
+                    println!(
+                        "MOV V{}, V{} >> 1",
+                        self.v_registers[instruction.x as usize],
+                        self.v_registers[instruction.y as usize]
+                    );
+
+                    //We have to set the VF register to the bit that was shifted out
+                    if self.v_registers[instruction.y as usize] & 1 != 0 {
+                        self.v_registers[0xF] = 1;
+                    } else {
+                        self.v_registers[0xF] = 0;
+                    }
+
+                    self.v_registers[instruction.x as usize] =
+                        self.v_registers[instruction.y as usize] >> 1;
+                }
+                0x7 => {
+                    println!(
+                        "SUB V{}, V{} MINUS V{}",
+                        instruction.x, instruction.y, instruction.x
+                    );
+
+                    // If we're going to underflow, vf should be set to 1
+                    if self.v_registers[instruction.y as usize]
+                        > self.v_registers[instruction.x as usize]
+                    {
+                        self.v_registers[0xF] = 1;
+                    } else if self.v_registers[instruction.y as usize]
+                        < self.v_registers[instruction.x as usize]
+                    {
+                        self.v_registers[0xF] = 0;
+                    }
+
+                    self.v_registers[instruction.x as usize] = self.v_registers
+                        [instruction.y as usize]
+                        .wrapping_sub(self.v_registers[instruction.x as usize]);
+                }
+                0xE => {
+                    println!(
+                        "MOV V{}, V{} << 1",
+                        self.v_registers[instruction.x as usize],
+                        self.v_registers[instruction.y as usize]
+                    );
+
+                    //We have to set the VF register to the bit that was shifted out
+                    if self.v_registers[instruction.y as usize] & 1 != 0 {
+                        self.v_registers[0xF] = 1;
+                    } else {
+                        self.v_registers[0xF] = 0;
+                    }
+
+                    self.v_registers[instruction.x as usize] =
+                        self.v_registers[instruction.y as usize] << 1;
+                }
+                _ => (),
+            },
+            0x9 => {
+                if self.v_registers[instruction.x as usize]
+                    != self.v_registers[instruction.y as usize]
+                {
+                    self.increment_program_counter(2);
+                }
+            }
             0xA => {
                 println!("MOV I, {}", instruction.nnn);
                 self.index_register = instruction.nnn;
+            }
+            0xB => {
+                println!("JMP {}", (instruction.nnn + self.v_registers[0x0] as u16));
+                self.set_program_counter(instruction.nnn + self.v_registers[0x0] as u16);
+            }
+            0xC => {
+                //This should generate a random number, place it into x register
+                //and binary AND it with nn
+                //Need to look into random number solutions.
+                todo!();
             }
             0xD => {
                 println!(
