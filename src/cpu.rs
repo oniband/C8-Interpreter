@@ -1,5 +1,6 @@
 use std::fs::File;
 use std::io::Read;
+use std::usize;
 
 #[derive(Debug)]
 pub struct Instruction {
@@ -102,7 +103,7 @@ impl Cpu {
                 //Roms have a tendency to have a "JUMP TO CURRENT INSTRUCTION" at the end of their instructions
                 //They do this because there's no "stop execution" instruction
                 //Here we make sure we're not just looping forever at the end
-                if self.program_counter == instruction.nnn {
+                if self.program_counter - 2 == instruction.nnn {
                     println!("Infinte loop detected, halting execution!");
                     self.should_halt = true;
                     self.clock_speed = 0;
@@ -318,6 +319,33 @@ impl Cpu {
                     }
                 }
             }
+            0xF => match instruction.nn {
+                0x1E => {
+                    println!("ADD I, V{}", instruction.x);
+                    self.index_register += self.v_registers[instruction.x as usize] as u16;
+                }
+                0x33 => {
+                    println!("CONV V{}", instruction.x);
+                    //This is probably the coolest instruction, you convert the binary value
+                    //into a decimal and then add all the digits together
+                    let old_value = self.v_registers[instruction.x as usize];
+                    for (idx, digit) in old_value.to_string().char_indices() {
+                        println!("DEBUG: {digit}");
+                        //Normally I woudln't use unwrap() here but since it's always going to be a
+                        //single digit, I think it's fine.
+                        self.memory[(self.index_register as usize) + idx] =
+                            digit.to_string().parse::<u8>().unwrap();
+                    }
+                }
+                0x55 => {
+                    println!("MEM SET FROM {} FOR {}", self.index_register, instruction.x);
+                    for register in 0..instruction.x {
+                        self.memory[(self.index_register as usize) + register as usize] =
+                            self.v_registers[register as usize];
+                    }
+                }
+                _ => {}
+            },
             _ => println!("Instruction Unimplemented"),
         }
     }
