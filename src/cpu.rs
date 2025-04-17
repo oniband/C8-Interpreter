@@ -70,7 +70,6 @@ impl Cpu {
     pub fn fetch(&mut self) -> Instruction {
         let decoded_opcode: u16 = ((self.memory[self.program_counter as usize] as u16) << 8)
             | self.memory[(self.program_counter + 1) as usize] as u16;
-        println!("CURRENT OPCODE: {decoded_opcode}");
         let decoded_instruction = Instruction {
             instruction: (self.memory[self.program_counter as usize] >> 4),
             x: (self.memory[self.program_counter as usize] & 0x0F),
@@ -94,10 +93,6 @@ impl Cpu {
 
         let opcode_next: u16 = ((self.memory[self.program_counter as usize + 2] as u16) << 8)
             | self.memory[(self.program_counter + 3) as usize] as u16;
-
-        println!("PREV: {}", opcode_previous);
-        println!("CURRENT: {}", opcode_current);
-        println!("NEXT: {}", opcode_next);
 
         [opcode_previous, opcode_current, opcode_next]
     }
@@ -127,8 +122,8 @@ impl Cpu {
                 //Here we make sure we're not just looping forever at the end
                 if self.program_counter - 2 == instruction.nnn {
                     println!("Infinte loop detected, halting execution!");
+                    self.clock_speed = 10;
                     self.should_halt = true;
-                    self.clock_speed = 0;
                 }
 
                 self.set_program_counter(instruction.nnn);

@@ -32,10 +32,12 @@ fn main() -> std::io::Result<()> {
         .title("C8-Emu")
         .build();
     rl.set_target_fps(cpu.clock_speed);
-    cpu.set_step_mode(true);
+    cpu.set_step_mode(false);
+    rl.set_trace_log(TraceLogLevel::LOG_NONE);
     let mut opcode_strings: [u16; 3] = Default::default();
     // rl.set_exit_key(Some(KeyboardKey::KEY_X));
     while !rl.window_should_close() {
+        rl.set_target_fps(cpu.clock_speed);
         if !cpu.should_halt {
             if !cpu.step_mode {
                 opcode_strings = cpu.fetch_opcodes();
