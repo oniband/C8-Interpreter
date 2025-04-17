@@ -71,17 +71,17 @@ fn main() -> std::io::Result<()> {
         for register in 0..=15 {
             d.draw_rectangle_lines(20 + offset, 225 + row, 40, 40, Color::WHITE); // V Register Box
             d.draw_text(
-                &format!("0X{:02x}", cpu.v_registers[register]),
-                23 + offset,
-                240 + row,
-                15,
+                &format!("{:02X}", cpu.v_registers[register]),
+                28 + offset,
+                236 + row,
+                20,
                 Color::WHITE,
             ); // V Register Value
             d.draw_text(
                 &format!("V{register}",),
-                34 + offset,
-                210 + row,
-                10,
+                25 + offset,
+                200 + row,
+                20,
                 Color::WHITE,
             ); // V Register Label
             offset += 70;
