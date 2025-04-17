@@ -42,15 +42,29 @@ fn main() -> std::io::Result<()> {
 
         let mut d = rl.begin_drawing(&thread);
         // UI RENDERING //
-        d.draw_rectangle_lines(125, 20, 40, 150, Color::WHITE); // Instruction List Box
-        d.draw_rectangle_lines(125, 75, 40, 40, Color::WHITE); // Current Instruction Box
-        d.draw_rectangle_lines(45, 75, 60, 40, Color::WHITE); // Program Counter Box
-        // V REGISTER CONTAINER RENDERING //
+        d.draw_rectangle_lines(115, 20, 60, 150, Color::WHITE); // Instruction List Box
+        d.draw_rectangle_lines(115, 75, 60, 40, Color::WHITE); // Current Instruction Box
+        d.draw_rectangle_lines(35, 75, 60, 40, Color::WHITE); // Program Counter Box
+        d.draw_text(
+            &format!("{}", cpu.program_counter),
+            45,
+            86,
+            20,
+            Color::WHITE,
+        ); // Program Counter Value
+        // V REGISTER RENDERING //
         let mut row: i32 = 0;
         let mut count: i32 = 1;
         let mut offset: i32 = 0;
-        for _ in 0..=15 {
-            d.draw_rectangle_lines(20 + offset, 225 + row, 40, 40, Color::WHITE);
+        for register in 0..=15 {
+            d.draw_rectangle_lines(20 + offset, 225 + row, 40, 40, Color::WHITE); // V Register Box
+            d.draw_text(
+                &format!("0X{:02x}", cpu.v_registers[register]),
+                23 + offset,
+                240 + row,
+                15,
+                Color::WHITE,
+            ); // V Register Value
             offset += 70;
             if count % 4 == 0 {
                 row += 70;
@@ -58,7 +72,7 @@ fn main() -> std::io::Result<()> {
             }
             count += 1;
         }
-        // V REGISTER CONTAINER RENDERING //
+        // V REGISTER RENDERING //
         // UI RENDERING //
 
         // GAME OUTPUT //

@@ -14,9 +14,9 @@ pub struct Instruction {
 
 pub struct Cpu {
     pub memory: [u8; 4096_usize],
-    v_registers: [u8; 16],
-    index_register: u16,
-    program_counter: u16,
+    pub v_registers: [u8; 16],
+    pub index_register: u16,
+    pub program_counter: u16,
     stack: Vec<u16>,
     pub should_halt: bool,
     pub pixel_buffer: [[bool; 64]; 32],
@@ -66,7 +66,7 @@ impl Cpu {
     //Looks scary but we're just doing bitwise operations on each byte to extract 4 nibbles and a 12
     //bit memory address from the final 3 nibbles.
     pub fn fetch(&mut self) -> Instruction {
-        let opcode: u16 = ((self.memory[self.program_counter as usize] as u16) << 8)
+        let decoded_opcode: u16 = ((self.memory[self.program_counter as usize] as u16) << 8)
             | self.memory[(self.program_counter + 1) as usize] as u16;
         let decoded_instruction = Instruction {
             instruction: (self.memory[self.program_counter as usize] >> 4),
@@ -74,7 +74,7 @@ impl Cpu {
             y: (self.memory[(self.program_counter + 1) as usize] >> 4),
             n: (self.memory[(self.program_counter + 1) as usize] & 0x0F),
             nn: self.memory[(self.program_counter + 1) as usize],
-            nnn: opcode & 0x0FFF,
+            nnn: decoded_opcode & 0x0FFF,
         };
         self.increment_program_counter(2);
         decoded_instruction
