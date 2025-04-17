@@ -122,7 +122,7 @@ impl Cpu {
                 //Here we make sure we're not just looping forever at the end
                 if self.program_counter - 2 == instruction.nnn {
                     println!("Infinte loop detected, halting execution!");
-                    self.clock_speed = 10;
+                    // self.clock_speed = 10;
                     self.should_halt = true;
                 }
 
