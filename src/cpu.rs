@@ -23,6 +23,7 @@ pub struct Cpu {
     //The clock speed is what will determine raylibs FPS. Seems to be the easiest way to implement
     //a cycle speed since we're calling cpu functions from within the raylib game loop.
     pub clock_speed: u32,
+    pub step_mode: bool,
 }
 
 impl Cpu {
@@ -36,6 +37,7 @@ impl Cpu {
             should_halt: false,
             pixel_buffer: [[false; 64]; 32],
             clock_speed: 60,
+            step_mode: false,
         }
     }
 
@@ -377,6 +379,10 @@ impl Cpu {
         } else {
             self.program_counter = value;
         }
+    }
+
+    pub fn set_step_mode(&mut self, value: bool) {
+        self.step_mode = value;
     }
 
     //A simple debug function that will dump out the contents of the pixel buffer into a

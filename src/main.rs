@@ -33,11 +33,19 @@ fn main() -> std::io::Result<()> {
         .title("C8-Emu")
         .build();
     rl.set_target_fps(cpu.clock_speed);
+    cpu.set_step_mode(false);
     // rl.set_exit_key(Some(KeyboardKey::KEY_X));
     while !rl.window_should_close() {
         if !cpu.should_halt {
-            let instruction: Instruction = cpu.fetch();
-            cpu.decode_and_execute(instruction);
+            if !cpu.step_mode {
+                let instruction: Instruction = cpu.fetch();
+                cpu.decode_and_execute(instruction);
+            } else {
+                if rl.is_key_pressed(KeyboardKey::KEY_SPACE) {
+                    let instruction: Instruction = cpu.fetch();
+                    cpu.decode_and_execute(instruction);
+                }
+            }
         }
 
         let mut d = rl.begin_drawing(&thread);
@@ -51,7 +59,7 @@ fn main() -> std::io::Result<()> {
         d.draw_rectangle_lines(35, 75, 60, 40, Color::WHITE); // Program Counter Box
         d.draw_text(
             &format!("{}", cpu.program_counter),
-            45,
+            50,
             86,
             20,
             Color::WHITE,
@@ -69,6 +77,13 @@ fn main() -> std::io::Result<()> {
                 15,
                 Color::WHITE,
             ); // V Register Value
+            d.draw_text(
+                &format!("V{register}",),
+                34 + offset,
+                210 + row,
+                10,
+                Color::WHITE,
+            ); // V Register Label
             offset += 70;
             if count % 4 == 0 {
                 row += 70;
