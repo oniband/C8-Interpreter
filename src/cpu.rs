@@ -13,7 +13,7 @@ pub struct Instruction {
 }
 
 pub struct Cpu {
-    memory: [u8; 4096_usize],
+    pub memory: [u8; 4096_usize],
     v_registers: [u8; 16],
     index_register: u16,
     program_counter: u16,
