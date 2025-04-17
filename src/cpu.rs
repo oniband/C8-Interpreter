@@ -82,6 +82,23 @@ impl Cpu {
         decoded_instruction
     }
 
+    // Creates a string representation of the Current, Previous and Next instruction in memory so
+    // that we can show it in the UI
+    pub fn fetch_opcodes(&mut self) -> [u16; 3] {
+        let opcode_previous: u16 = ((self.memory[self.program_counter as usize - 2] as u16) << 8)
+            | self.memory[(self.program_counter - 1) as usize] as u16;
+
+        let opcode_current: u16 = ((self.memory[self.program_counter as usize] as u16) << 8)
+            | self.memory[(self.program_counter + 1) as usize] as u16;
+
+        let opcode_next: u16 = ((self.memory[self.program_counter as usize + 4] as u16) << 8)
+            | self.memory[(self.program_counter + 3) as usize] as u16;
+
+        println!("DEBUG: {}", opcode_current);
+
+        [opcode_previous, opcode_current, opcode_next]
+    }
+
     pub fn decode_and_execute(&mut self, instruction: Instruction) {
         match instruction.instruction {
             0x0 => {

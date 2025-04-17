@@ -5,7 +5,7 @@ mod cpu;
 use crate::cpu::{Cpu, Instruction};
 
 mod util;
-use crate::util::{_create_instruction_representation, validate_args};
+use crate::util::validate_args;
 
 const WINDOW_WIDTH: i32 = 1250;
 const WINDOW_HEIGHT: i32 = 500;
@@ -20,7 +20,6 @@ fn main() -> std::io::Result<()> {
         Ok(value) => {
             let mut program = File::open(value)?;
             cpu.load_program_into_memory(&mut program);
-            _create_instruction_representation(&mut program);
         }
         Err(err) => {
             panic!("{err}");
@@ -33,16 +32,19 @@ fn main() -> std::io::Result<()> {
         .title("C8-Emu")
         .build();
     rl.set_target_fps(cpu.clock_speed);
-    cpu.set_step_mode(false);
+    cpu.set_step_mode(true);
+    let mut opcode_strings: [u16; 3] = Default::default();
     // rl.set_exit_key(Some(KeyboardKey::KEY_X));
     while !rl.window_should_close() {
         if !cpu.should_halt {
             if !cpu.step_mode {
                 let instruction: Instruction = cpu.fetch();
+                opcode_strings = cpu.fetch_opcodes();
                 cpu.decode_and_execute(instruction);
             } else {
                 if rl.is_key_pressed(KeyboardKey::KEY_SPACE) {
                     let instruction: Instruction = cpu.fetch();
+                    opcode_strings = cpu.fetch_opcodes();
                     cpu.decode_and_execute(instruction);
                 }
             }
@@ -54,8 +56,32 @@ fn main() -> std::io::Result<()> {
         d.draw_rectangle(945, 0, 320, WINDOW_HEIGHT, Color::BLACK); // Right Black Background
         d.draw_rectangle(305, 0, 640, 90, Color::BLACK); // Top Border
         d.draw_rectangle(305, WINDOW_HEIGHT - 90, 640, 100, Color::BLACK); // Bottom Border
-        d.draw_rectangle_lines(115, 20, 60, 150, Color::WHITE); // Instruction List Box
+        // Current, next and previous instruction list
+        d.draw_rectangle_lines(115, 35, 60, 120, Color::WHITE); // Instruction List Box
         d.draw_rectangle_lines(115, 75, 60, 40, Color::WHITE); // Current Instruction Box
+        d.draw_text(
+            &format!("{:04X}", &opcode_strings[0]),
+            122,
+            45,
+            20,
+            Color::WHITE,
+        ); // Prev Instruction
+        d.draw_text(
+            &format!("{:04X}", &opcode_strings[1]),
+            122,
+            85,
+            20,
+            Color::WHITE,
+        ); //Current Instruction
+        d.draw_text(
+            &format!("{:04X}", &opcode_strings[2]),
+            122,
+            125,
+            20,
+            Color::WHITE,
+        ); // Next Instruction
+        // Current, next and previous instruction list
+        d.draw_text("PC", 50, 50, 20, Color::WHITE); // Program Counter Label
         d.draw_rectangle_lines(35, 75, 60, 40, Color::WHITE); // Program Counter Box
         d.draw_text(
             &format!("{}", cpu.program_counter),
@@ -78,9 +104,9 @@ fn main() -> std::io::Result<()> {
                 Color::WHITE,
             ); // V Register Value
             d.draw_text(
-                &format!("V{register}",),
+                &format!("V{register:01X}",),
                 25 + offset,
-                200 + row,
+                205 + row,
                 20,
                 Color::WHITE,
             ); // V Register Label

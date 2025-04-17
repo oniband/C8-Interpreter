@@ -1,6 +1,5 @@
 use std::env;
 use std::fmt;
-use std::fs::File;
 
 type Result<String> = std::result::Result<String, ArgError>;
 
@@ -21,8 +20,4 @@ pub fn validate_args() -> Result<String> {
     } else {
         Ok(args[1].clone())
     }
-}
-
-pub fn _create_instruction_representation(_program: &mut File) -> Vec<String> {
-    return Vec::new();
 }
