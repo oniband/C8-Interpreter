@@ -70,6 +70,7 @@ impl Cpu {
     pub fn fetch(&mut self) -> Instruction {
         let decoded_opcode: u16 = ((self.memory[self.program_counter as usize] as u16) << 8)
             | self.memory[(self.program_counter + 1) as usize] as u16;
+        println!("CURRENT OPCODE: {decoded_opcode}");
         let decoded_instruction = Instruction {
             instruction: (self.memory[self.program_counter as usize] >> 4),
             x: (self.memory[self.program_counter as usize] & 0x0F),
@@ -91,10 +92,12 @@ impl Cpu {
         let opcode_current: u16 = ((self.memory[self.program_counter as usize] as u16) << 8)
             | self.memory[(self.program_counter + 1) as usize] as u16;
 
-        let opcode_next: u16 = ((self.memory[self.program_counter as usize + 4] as u16) << 8)
+        let opcode_next: u16 = ((self.memory[self.program_counter as usize + 2] as u16) << 8)
             | self.memory[(self.program_counter + 3) as usize] as u16;
 
-        println!("DEBUG: {}", opcode_current);
+        println!("PREV: {}", opcode_previous);
+        println!("CURRENT: {}", opcode_current);
+        println!("NEXT: {}", opcode_next);
 
         [opcode_previous, opcode_current, opcode_next]
     }

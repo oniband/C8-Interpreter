@@ -38,13 +38,13 @@ fn main() -> std::io::Result<()> {
     while !rl.window_should_close() {
         if !cpu.should_halt {
             if !cpu.step_mode {
-                let instruction: Instruction = cpu.fetch();
                 opcode_strings = cpu.fetch_opcodes();
+                let instruction: Instruction = cpu.fetch();
                 cpu.decode_and_execute(instruction);
             } else {
                 if rl.is_key_pressed(KeyboardKey::KEY_SPACE) {
-                    let instruction: Instruction = cpu.fetch();
                     opcode_strings = cpu.fetch_opcodes();
+                    let instruction: Instruction = cpu.fetch();
                     cpu.decode_and_execute(instruction);
                 }
             }
