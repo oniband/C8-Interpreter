@@ -42,6 +42,10 @@ fn main() -> std::io::Result<()> {
 
         let mut d = rl.begin_drawing(&thread);
         // UI RENDERING //
+        d.draw_rectangle(0, 0, 320, WINDOW_HEIGHT, Color::BLACK); // Left Black Background
+        d.draw_rectangle(950, 0, 320, WINDOW_HEIGHT, Color::BLACK); // RIght Black Background
+        d.draw_rectangle(320, 0, 640, 100, Color::BLACK); // Top Border
+        d.draw_rectangle(320, WINDOW_HEIGHT - 100, 640, 100, Color::BLACK); // Bottom Border
         d.draw_rectangle_lines(115, 20, 60, 150, Color::WHITE); // Instruction List Box
         d.draw_rectangle_lines(115, 75, 60, 40, Color::WHITE); // Current Instruction Box
         d.draw_rectangle_lines(35, 75, 60, 40, Color::WHITE); // Program Counter Box
