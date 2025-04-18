@@ -2,6 +2,8 @@ use std::fs::File;
 use std::io::Read;
 use std::usize;
 
+use rand::Rng;
+
 #[derive(Debug)]
 pub struct Instruction {
     pub instruction: u8,
@@ -24,6 +26,7 @@ pub struct Cpu {
     //a cycle speed since we're calling cpu functions from within the raylib game loop.
     pub clock_speed: u32,
     pub step_mode: bool,
+    pub waiting_for_input: bool,
 }
 
 impl Cpu {
@@ -36,8 +39,9 @@ impl Cpu {
             stack: Vec::new(),
             should_halt: false,
             pixel_buffer: [[false; 64]; 32],
-            clock_speed: 60,
+            clock_speed: 120,
             step_mode: false,
+            waiting_for_input: false,
         }
     }
 
@@ -298,10 +302,8 @@ impl Cpu {
                 self.set_program_counter(instruction.nnn + self.v_registers[0x0] as u16);
             }
             0xC => {
-                //This should generate a random number, place it into x register
-                //and binary AND it with nn
-                //Need to look into random number solutions.
-                todo!();
+                self.v_registers[instruction.x as usize] =
+                    rand::rng().random::<u8>() & instruction.nn;
             }
             0xD => {
                 println!(

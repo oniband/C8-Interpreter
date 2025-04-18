@@ -34,7 +34,7 @@ fn main() -> std::io::Result<()> {
     // rl.set_exit_key(Some(KeyboardKey::KEY_X));
     while !rl.window_should_close() {
         rl.set_target_fps(cpu.clock_speed);
-        if !cpu.should_halt {
+        if !cpu.should_halt && !cpu.waiting_for_input {
             if !cpu.step_mode {
                 opcode_strings = cpu.fetch_opcodes();
                 let instruction: Instruction = cpu.fetch();
