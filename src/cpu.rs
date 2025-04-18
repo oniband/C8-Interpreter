@@ -1,6 +1,5 @@
 use std::fs::File;
 use std::io::Read;
-use std::usize;
 
 use rand::Rng;
 
@@ -24,9 +23,8 @@ pub struct Cpu {
     pub pixel_buffer: [[bool; 64]; 32],
     //The clock speed is what will determine raylibs FPS. Seems to be the easiest way to implement
     //a cycle speed since we're calling cpu functions from within the raylib game loop.
-    pub clock_speed: u32,
     pub step_mode: bool,
-    pub waiting_for_input: bool,
+    pub current_key: u8,
 }
 
 impl Cpu {
@@ -39,9 +37,8 @@ impl Cpu {
             stack: Vec::new(),
             should_halt: false,
             pixel_buffer: [[false; 64]; 32],
-            clock_speed: 120,
             step_mode: false,
-            waiting_for_input: false,
+            current_key: 255,
         }
     }
 
@@ -109,7 +106,7 @@ impl Cpu {
                     println!("CLS");
                     self.pixel_buffer = [[false; 64]; 32];
                 }
-                if instruction.n == 0xE && instruction.n == 0x0E {
+                if instruction.n == 0xE {
                     if let Some(return_address) = self.stack.pop() {
                         println!("RET {return_address}");
                         self.set_program_counter(return_address);
@@ -175,21 +172,18 @@ impl Cpu {
                 }
                 0x1 => {
                     println!("OR V{}, V{}", instruction.x, instruction.y);
-                    self.v_registers[instruction.x as usize] = self.v_registers
-                        [instruction.x as usize]
-                        | self.v_registers[instruction.y as usize];
+                    self.v_registers[instruction.x as usize] |=
+                        self.v_registers[instruction.y as usize];
                 }
                 0x2 => {
                     println!("AND V{}, V{}", instruction.x, instruction.y);
-                    self.v_registers[instruction.x as usize] = self.v_registers
-                        [instruction.x as usize]
-                        & self.v_registers[instruction.y as usize];
+                    self.v_registers[instruction.x as usize] &=
+                        self.v_registers[instruction.y as usize];
                 }
                 0x3 => {
                     println!("XOR V{}, V{}", instruction.x, instruction.y);
-                    self.v_registers[instruction.x as usize] = self.v_registers
-                        [instruction.x as usize]
-                        ^ self.v_registers[instruction.y as usize];
+                    self.v_registers[instruction.x as usize] ^=
+                        self.v_registers[instruction.y as usize];
                 }
                 0x4 => {
                     println!("ADD V{}, V{}", instruction.x, instruction.y);
@@ -338,7 +332,28 @@ impl Cpu {
                     }
                 }
             }
+            0xE => match instruction.nn {
+                0x9E => {
+                    if self.v_registers[instruction.x as usize] == self.current_key {
+                        self.increment_program_counter(2);
+                    }
+                }
+                0xA1 => {
+                    if self.v_registers[instruction.x as usize] != self.current_key {
+                        self.increment_program_counter(2);
+                    }
+                }
+                _ => (),
+            },
             0xF => match instruction.nn {
+                0x0A => {
+                    //If we're not pressing a key, just go back and wait for a key to be pressed!
+                    if self.current_key == 255 {
+                        self.set_program_counter(self.program_counter - 2);
+                    } else {
+                        self.v_registers[instruction.x as usize] = self.current_key;
+                    }
+                }
                 0x1E => {
                     println!("ADD I, V{}", instruction.x);
                     self.index_register += self.v_registers[instruction.x as usize] as u16;
@@ -356,7 +371,7 @@ impl Cpu {
                     println!("MEM SET FROM {} FOR {}", self.index_register, instruction.x);
                     for register in 0..=instruction.x {
                         self.memory[(self.index_register as usize) + register as usize] =
-                            self.v_registers[0 + register as usize];
+                            self.v_registers[register as usize];
                     }
                 }
                 0x65 => {
@@ -365,7 +380,7 @@ impl Cpu {
                         self.index_register, instruction.x
                     );
                     for register in 0..=instruction.x {
-                        self.v_registers[0 + register as usize] =
+                        self.v_registers[register as usize] =
                             self.memory[(self.index_register as usize) + register as usize];
                     }
                 }
@@ -373,6 +388,9 @@ impl Cpu {
             },
             _ => println!("Instruction Unimplemented"),
         }
+        // Setting this as a safety guard so that we're not keeping any previously held keys in the
+        // cpu memory!
+        self.current_key = 255;
     }
 
     fn increment_program_counter(&mut self, value: u16) {

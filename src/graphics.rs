@@ -28,7 +28,7 @@ pub fn draw_game_pixels(d: &mut RaylibDrawHandle, cpu: &Cpu) {
     }
 }
 
-pub fn draw_ui_elements(d: &mut RaylibDrawHandle, cpu: &Cpu, opcode_strings: [u16; 3]) {
+pub fn draw_ui_elements(d: &mut RaylibDrawHandle, cpu: &mut Cpu, opcode_strings: [u16; 3]) {
     d.draw_rectangle(0, 0, 305, WINDOW_HEIGHT, Color::BLACK); // Left Black Background
     d.draw_rectangle(945, 0, 320, WINDOW_HEIGHT, Color::BLACK); // Right Black Background
     d.draw_rectangle(305, 0, 640, 90, Color::BLACK); // Top Border
@@ -102,6 +102,7 @@ pub fn draw_ui_elements(d: &mut RaylibDrawHandle, cpu: &Cpu, opcode_strings: [u1
         d.draw_rectangle_lines(970, 50, 65, 65, Color::WHITE);
         d.draw_text("1", 995, 60, 50, Color::WHITE);
     } else {
+        cpu.current_key = 1;
         d.draw_rectangle(970, 45, 65, 65, Color::WHITE);
         d.draw_text("1", 995, 60, 50, Color::BLACK);
     }
