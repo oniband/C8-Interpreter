@@ -13,8 +13,6 @@ use crate::graphics::{WINDOW_HEIGHT, WINDOW_WIDTH, draw_game_pixels, draw_ui_ele
 mod util;
 use crate::util::validate_args;
 
-const FPS: u32 = 60;
-
 fn main() -> std::io::Result<()> {
     let mut cpu = Cpu::new();
     match validate_args() {
@@ -32,9 +30,10 @@ fn main() -> std::io::Result<()> {
         .height(WINDOW_HEIGHT)
         .title("C8-Emu")
         .build();
-    rl.set_target_fps(FPS);
-    cpu.set_step_mode(false);
+    rl.set_target_fps(600);
     rl.set_trace_log(TraceLogLevel::LOG_NONE);
+
+    cpu.set_step_mode(false);
     let mut opcode_strings: [u16; 3] = Default::default();
 
     while !rl.window_should_close() {

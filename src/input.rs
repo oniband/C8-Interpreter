@@ -1,6 +1,8 @@
 use crate::cpu::Cpu;
 use raylib::prelude::*;
 
+// This really sucks but I cannot update input state in the draw phase as it's only called at 60 FPS
+// I have to create a separate function that can be called at the CPUs clock speed
 pub fn poll_input(rl: &mut RaylibHandle, cpu: &mut Cpu) {
     if !rl.is_key_up(KeyboardKey::KEY_ONE) {
         cpu.current_key = 1;
