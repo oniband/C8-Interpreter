@@ -14,6 +14,7 @@ use crate::graphics::{WINDOW_HEIGHT, WINDOW_WIDTH, draw_game_pixels, draw_ui_ele
 mod util;
 use crate::util::validate_args;
 
+const FPS: u32 = 60;
 fn main() -> std::io::Result<()> {
     let mut cpu = Cpu::new();
 
@@ -32,7 +33,7 @@ fn main() -> std::io::Result<()> {
         .height(WINDOW_HEIGHT)
         .title("C8-Emu")
         .build();
-    rl.set_target_fps(60);
+    rl.set_target_fps(FPS);
     rl.set_trace_log(TraceLogLevel::LOG_NONE);
 
     cpu.set_step_mode(false);
@@ -40,10 +41,10 @@ fn main() -> std::io::Result<()> {
     let mut timer = Instant::now();
 
     while !rl.window_should_close() {
-        // A bis implementation of a cylce speed, this is about 1Mhz
-        if timer.elapsed() >= Duration::from_millis(25) {
+        // A bis implementation of a cylce speed, this is about 2Mhz
+        if timer.elapsed() >= Duration::from_millis(10) {
             timer = Instant::now();
-            for n in 0..=25 {
+            for _ in 0..=20 {
                 if !cpu.should_halt {
                     poll_input(&mut rl, &mut cpu);
                     if !cpu.step_mode {
