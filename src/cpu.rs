@@ -144,11 +144,22 @@ impl Cpu {
                 }
             }
             0x4 => {
+                println!(
+                    "JMP IF NOT EQUAL V{} {}, {}",
+                    instruction.x, self.v_registers[instruction.x as usize], instruction.nnn
+                );
                 if self.v_registers[instruction.x as usize] != instruction.nn {
                     self.increment_program_counter(2);
                 }
             }
             0x5 => {
+                println!(
+                    "JMP IF EQUAL V{} {}, V{} {}",
+                    instruction.x,
+                    self.v_registers[instruction.x as usize],
+                    instruction.y,
+                    self.v_registers[instruction.y as usize]
+                );
                 if self.v_registers[instruction.x as usize]
                     == self.v_registers[instruction.y as usize]
                 {
@@ -281,6 +292,13 @@ impl Cpu {
                 _ => (),
             },
             0x9 => {
+                println!(
+                    "JMP IF NOT EQUAL V{} {}, V{} {}",
+                    instruction.x,
+                    self.v_registers[instruction.x as usize],
+                    instruction.y,
+                    self.v_registers[instruction.y as usize]
+                );
                 if self.v_registers[instruction.x as usize]
                     != self.v_registers[instruction.y as usize]
                 {
@@ -296,6 +314,7 @@ impl Cpu {
                 self.set_program_counter(instruction.nnn + self.v_registers[0x0] as u16);
             }
             0xC => {
+                println!("RAND V{}", instruction.x);
                 self.v_registers[instruction.x as usize] =
                     rand::rng().random::<u8>() & instruction.nn;
             }
@@ -334,11 +353,16 @@ impl Cpu {
             }
             0xE => match instruction.nn {
                 0x9E => {
+                    println!("JMP IF KEY {}", self.v_registers[instruction.x as usize]);
                     if self.v_registers[instruction.x as usize] == self.current_key {
                         self.increment_program_counter(2);
                     }
                 }
                 0xA1 => {
+                    println!(
+                        "JMP IF NOT KEY {}",
+                        self.v_registers[instruction.x as usize]
+                    );
                     if self.v_registers[instruction.x as usize] != self.current_key {
                         self.increment_program_counter(2);
                     }
@@ -348,6 +372,7 @@ impl Cpu {
             0xF => match instruction.nn {
                 0x0A => {
                     //If we're not pressing a key, just go back and wait for a key to be pressed!
+                    println!("AWAIT KEY");
                     if self.current_key == 255 {
                         self.set_program_counter(self.program_counter - 2);
                     } else {
