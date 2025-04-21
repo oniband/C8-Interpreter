@@ -52,7 +52,7 @@ fn main() -> std::io::Result<()> {
             }
         }
 
-        if cpu.step_mode && rl.is_key_pressed(KeyboardKey::KEY_SPACE) {
+        if cpu.step_mode && !cpu.should_halt && rl.is_key_pressed(KeyboardKey::KEY_SPACE) {
             poll_input(&mut rl, &mut cpu);
             opcode_strings = cpu.fetch_opcodes();
             let instruction: Instruction = cpu.fetch();
