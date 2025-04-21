@@ -41,23 +41,22 @@ fn main() -> std::io::Result<()> {
     let mut timer = Instant::now();
 
     while !rl.window_should_close() {
-        // A bis implementation of a cylce speed, this is about 2Mhz
-        if timer.elapsed() >= Duration::from_millis(10) {
+        // A basic implementation of a cylce speed, this is about 2Mhz
+        if timer.elapsed() >= Duration::from_millis(10) && !cpu.step_mode && !cpu.should_halt {
             timer = Instant::now();
             for _ in 0..=20 {
-                if !cpu.should_halt {
-                    poll_input(&mut rl, &mut cpu);
-                    if !cpu.step_mode {
-                        opcode_strings = cpu.fetch_opcodes();
-                        let instruction: Instruction = cpu.fetch();
-                        cpu.decode_and_execute(instruction);
-                    } else if rl.is_key_pressed(KeyboardKey::KEY_SPACE) {
-                        opcode_strings = cpu.fetch_opcodes();
-                        let instruction: Instruction = cpu.fetch();
-                        cpu.decode_and_execute(instruction);
-                    }
-                }
+                poll_input(&mut rl, &mut cpu);
+                opcode_strings = cpu.fetch_opcodes();
+                let instruction: Instruction = cpu.fetch();
+                cpu.decode_and_execute(instruction);
             }
+        }
+
+        if cpu.step_mode && rl.is_key_pressed(KeyboardKey::KEY_SPACE) {
+            poll_input(&mut rl, &mut cpu);
+            opcode_strings = cpu.fetch_opcodes();
+            let instruction: Instruction = cpu.fetch();
+            cpu.decode_and_execute(instruction);
         }
 
         let mut d = rl.begin_drawing(&thread);
