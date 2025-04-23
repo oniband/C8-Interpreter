@@ -14,9 +14,9 @@ pub struct Instruction {
 }
 
 pub struct Cpu {
-    pub memory: [u8; 4096_usize],
+    memory: [u8; 4096_usize],
     pub v_registers: [u8; 16],
-    pub index_register: u16,
+    index_register: u16,
     pub program_counter: u16,
     stack: Vec<u16>,
     pub should_halt: bool,
