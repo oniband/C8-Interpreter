@@ -1,4 +1,3 @@
-use raylib::ffi::EndDrawing;
 use raylib::prelude::*;
 use std::fs::File;
 use std::time::{Duration, Instant};
