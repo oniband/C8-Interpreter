@@ -6,7 +6,7 @@ This project really helped me get back into programming full time.
 # Dependencies
 You will need cargo(ideally rustup) installed to compile the program.
 
-It only uses [raylib-rs](https://github.com/raylib-rs/raylib-rs) as a build dependency which has various requirements for each platform:
+It only uses [raylib-rs](https://github.com/raylib-rs/raylib-rs) and [rand](https://crates.io/crates/rand) as a dependency which has various requirements for each platform:
 ## Linux
 - CMake
 - Clang
