@@ -44,11 +44,14 @@ fn main() -> std::io::Result<()> {
         // A basic implementation of a cylce speed, this is about 2Mhz
         if timer.elapsed() >= Duration::from_millis(10) && !cpu.step_mode && !cpu.should_halt {
             timer = Instant::now();
-            for _ in 0..=10 {
-                poll_input(&mut rl, &mut cpu);
+            for _ in 0..70 {
                 opcode_strings = cpu.fetch_opcodes();
                 let instruction: Instruction = cpu.fetch();
                 cpu.decode_and_execute(instruction);
+                poll_input(&mut rl, &mut cpu);
+                if cpu.should_halt {
+                    break;
+                }
             }
         }
 
@@ -59,7 +62,6 @@ fn main() -> std::io::Result<()> {
             cpu.decode_and_execute(instruction);
         }
 
-        poll_input(&mut rl, &mut cpu);
         let mut d = rl.begin_drawing(&thread);
         draw_ui_elements(&mut d, &mut cpu, opcode_strings);
         draw_game_pixels(&mut d, &cpu);
